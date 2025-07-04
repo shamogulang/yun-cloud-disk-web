@@ -156,40 +156,16 @@ export class FileUploader {
   }
 
   // 第二阶段：上传文件到S3
-  private async uploadToS3(): Promise<void> {
+  private async uploadToS3(uploadUrl: string): Promise<void> {
     try {
-      const s3Config = {
-        endpoint: 'http://127.0.0.1:9000',
-        credentials: {
-          accessKeyId: 'minio',
-          secretAccessKey: '12345678'
-        },
-        region: 'us-east-1',
-        forcePathStyle: true,
-        requestHandler: {
-          httpHandler: {
-            requestTimeout: 0
-          }
+      // 直接用 uploadUrl 上传文件
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: this.file,
+        headers: {
+          'Content-Type': this.file.type
         }
-      };
-
-      const s3Client = new S3Client(s3Config);
-      // Convert File to ArrayBuffer
-      const arrayBuffer = await this.file.arrayBuffer()
-      // 生成带hash后缀的Key
-      const extIndex = this.file.name.lastIndexOf('.')
-      const baseName = extIndex !== -1 ? this.file.name.substring(0, extIndex) : this.file.name
-      const ext = extIndex !== -1 ? this.file.name.substring(extIndex) : ''
-      const keyWithHash = `${baseName}-${this.hash}${ext}`
-      const command = new PutObjectCommand({
-        Bucket: 'personal',  // 使用固定的bucket名称
-        Key: keyWithHash,  // 文件名加hash后缀
-        Body: new Uint8Array(arrayBuffer),
-        ContentType: this.file.type
-      });
-
-      const result = await s3Client.send(command)
-
+      })
     } catch (error) {
       throw new Error('上传文件到S3失败')
     }
@@ -213,7 +189,7 @@ export class FileUploader {
       const data = await this.getUploadInfo()
 
       // 第二阶段：上传到S3
-      await this.uploadToS3()
+      await this.uploadToS3(data.uploadUrl)
 
       // 第三阶段：通知完成
       await this.notifyComplete(data.id)
