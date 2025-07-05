@@ -30,7 +30,7 @@
         <el-button
           type="danger"
           :disabled="!fileStore.selectedFiles.length"
-          @click="handleDelete"
+          @click="handleDelete()"
         >
           <el-icon><Delete /></el-icon>
           删除
@@ -60,6 +60,12 @@
             :style="row.fileType === 'directory' ? 'color: #409EFF; cursor: pointer;' : ''"
             @click="row.fileType === 'directory' && handleEnterFolder(row)"
           >
+            <img
+    v-if="row.thumbnailUrls && row.thumbnailUrls.length > 0"
+    :src="row.thumbnailUrls[0].url"
+    alt="thumb"
+    style="width: 24px; height: 24px; object-fit: cover; margin-right: 6px; vertical-align: middle;"
+  />
             {{ row.fileName }}
           </span>
         </template>
@@ -70,34 +76,7 @@
           {{ formatSize(row.fileSize) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
-        <template #default="{ row }">
-          <el-button-group>
-            <el-button
-              v-if="row.fileType !== 'directory'"
-              type="primary"
-              link
-              @click="handleDownload(row)"
-            >
-              下载
-            </el-button>
-            <el-button
-              type="primary"
-              link
-              @click="handleShare([row])"
-            >
-              分享
-            </el-button>
-            <el-button
-              type="danger"
-              link
-              @click="handleDelete([row])"
-            >
-              删除
-            </el-button>
-          </el-button-group>
-        </template>
-      </el-table-column>
+  
     </el-table>
 
     <el-dialog
@@ -305,16 +284,26 @@ const submitCreateFolder = async () => {
 }
 
 const handleDelete = async (files = fileStore.selectedFiles) => {
+  // 调试：打印传入的 files 和 fileStore.selectedFiles
+  console.log('handleDelete 参数 files:', files);
+  console.log('当前 fileStore.selectedFiles:', fileStore.selectedFiles);
+  // 统一转成数组，过滤掉没有 id 的
+  const fileArr = (Array.isArray(files) ? files : [files]).filter(f => f && typeof f === 'object' && f.id !== undefined && f.id !== null);
+  console.log('最终用于删除的 fileArr:', fileArr);
+  if (fileArr.length === 0) {
+    ElMessage.error('未选中文件，或选中的文件没有有效ID，无法删除');
+    return;
+  }
   try {
     await ElMessageBox.confirm('确定要删除选中的文件吗？', '提示', {
       type: 'warning'
-    })
-    await deleteFiles(files.map(file => file.id))
-    ElMessage.success('删除成功')
-    loadFileList()
+    });
+    await deleteFiles(fileArr.map(file => file.id));
+    ElMessage.success('删除成功');
+    loadFileList();
   } catch (error) {
     if (error !== 'cancel') {
-      console.error(error)
+      console.error(error);
     }
   }
 }
