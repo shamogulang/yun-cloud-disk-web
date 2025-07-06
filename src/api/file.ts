@@ -156,19 +156,21 @@ export class FileUploader {
   }
 
   // 第二阶段：上传文件到S3
-  private async uploadToS3(uploadUrl: string): Promise<void> {
-    try {
-      // 直接用 uploadUrl 上传文件
-      await fetch(uploadUrl, {
-        method: 'PUT',
-        body: this.file,
-        headers: {
-          'Content-Type': this.file.type
+  private async uploadToS3(uploadUrl: string, onProgress?: (progress: number) => void): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('PUT', uploadUrl)
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100)
+          onProgress(percent)
         }
-      })
-    } catch (error) {
-      throw new Error('上传文件到S3失败')
-    }
+      }
+      xhr.onload = () => resolve()
+      xhr.onerror = () => reject(new Error('上传文件到S3失败'))
+      xhr.setRequestHeader('Content-Type', this.file.type)
+      xhr.send(this.file)
+    })
   }
 
   // 第三阶段：通知后台上传完成
@@ -187,14 +189,11 @@ export class FileUploader {
     try {
       // 第一阶段：获取上传信息
       const data = await this.getUploadInfo()
-
-      // 第二阶段：上传到S3
-      await this.uploadToS3(data.uploadUrl)
-
+      // 第二阶段：上传到S3，支持进度
+      await this.uploadToS3(data.uploadUrl, onProgress)
       // 第三阶段：通知完成
       await this.notifyComplete(data.id)
-
-      ElMessage.success('文件上传成功')
+      //ElMessage.success('文件上传成功')
     } catch (error) {
       throw error
     }

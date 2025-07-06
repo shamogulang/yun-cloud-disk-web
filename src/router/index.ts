@@ -8,15 +8,21 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '',
-        name: 'Statistics',
-        meta:{"menuname":"统计"},
+        name: 'Home',
+        meta:{"menuname":"首页"},
         component: () => import('../views/Home.vue')
       },
       {
-        path: 'files',
-        name: 'Files',
-        meta:{"menuname":"首页"},
-        component: () => import('../views/Files.vue')
+        path: '/transfer',
+        name: 'TransferList',
+        meta:{"menuname":"传输列表"},
+        component: () => import('../views/TransferList.vue')
+      },
+      {
+        path: '/statistic',
+        name: 'Statistics',
+        meta:{"menuname":"统计"},
+        component: () => import('../views/Statistic.vue')
       }
     ]
   },

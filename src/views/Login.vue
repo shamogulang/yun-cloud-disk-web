@@ -81,7 +81,7 @@ const handleLogin = async () => {
           userStore.setToken(res.data.token)
           userStore.setUsername(res.data.username)
           userStore.setUserId(res.data.userId)
-          router.push('/files')
+          router.push('/')
         } else {
           ElMessage.error(res.msg || '登录失败')
         }

@@ -10,11 +10,16 @@
         class="el-menu-vertical"
         router
       >
-        <el-menu-item index="/files">
+      <el-menu-item index="/">
           <el-icon><HomeFilled /></el-icon>
           <span>首页</span>
         </el-menu-item>
-        <el-menu-item index="/">
+        <el-menu-item index="/transfer" class="transfer-menu-item">
+          <el-icon><UploadFilled /></el-icon>
+          <span class="transfer-text">传输列表</span>
+          <span v-if="uploadingCount > 0" class="transfer-dot">{{ uploadingCount }}</span>
+        </el-menu-item>
+        <el-menu-item index="/statistic">
           <el-icon><Folder /></el-icon>
           <span>统计信息</span>
         </el-menu-item>
@@ -51,12 +56,15 @@
 
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '../store'
-import { HomeFilled, Folder, ArrowDown } from '@element-plus/icons-vue'
+import { useUserStore, useTransferStore } from '../store'
+import { HomeFilled, Folder, ArrowDown, UploadFilled } from '@element-plus/icons-vue'
+import { computed, watch, nextTick } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const transferStore = useTransferStore()
+const uploadingCount = computed(() => transferStore.uploadingCount)
 
 const handleCommand = (command: string) => {
   if (command === 'logout') {
@@ -64,6 +72,14 @@ const handleCommand = (command: string) => {
     router.push('/login')
   }
 }
+
+watch(
+  () => transferStore.tasks,
+  () => {
+    nextTick(() => {})
+  },
+  { deep: true }
+)
 </script>
 
 <style scoped>
@@ -108,5 +124,31 @@ const handleCommand = (command: string) => {
 .el-main {
   background-color: #f5f7fa;
   padding: 20px;
+}
+
+.transfer-menu-item {
+  display: flex !important;
+  align-items: center;
+  position: relative;
+}
+
+.transfer-text {
+  margin-left: 4px;
+}
+
+.transfer-dot {
+  background: #f56c6c;
+  color: #fff;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px #fff;
 }
 </style> 
