@@ -11,6 +11,9 @@
           刷新
         </el-button>
       </el-button-group>
+      <div>
+        
+      </div>
       <div class="right-tools">
         <el-upload
           :auto-upload="false"
@@ -27,22 +30,29 @@
           <el-icon><FolderAdd /></el-icon>
           新建文件夹
         </el-button>
-        <el-button
-          type="danger"
-          :disabled="!fileStore.selectedFiles.length"
-          @click="handleDelete()"
-        >
-          <el-icon><Delete /></el-icon>
-          删除
-        </el-button>
-        <el-button
-          type="success"
-          :disabled="!fileStore.selectedFiles.length"
-          @click="handleShare()"
-        >
-          <el-icon><Share /></el-icon>
-          分享
-        </el-button>
+        <template v-if="fileStore.selectedFiles.length">
+          <el-button
+            type="danger"
+            @click="handleDelete()"
+          >
+            <el-icon><Delete /></el-icon>
+            删除
+          </el-button>
+          <el-button
+            type="success"
+            @click="handleShare()"
+          >
+            <el-icon><Share /></el-icon>
+            分享
+          </el-button>
+          <el-button
+            type="primary"
+            @click="handleBatchDownload"
+          >
+            <el-icon><Download /></el-icon>
+            下载
+          </el-button>
+        </template>
       </div>
     </div>
 
@@ -149,13 +159,22 @@
     </el-dialog>
 
     <el-progress v-if="uploading" :percentage="uploadPercent" style="margin-top: 10px;" />
+
+    <el-dialog v-model="previewDialogVisible" :title="previewFileName" width="60vw" top="5vh" @close="previewType = ''">
+      <template v-if="previewType === 'video'">
+        <video :src="previewUrl" controls style="width: 100%; max-height: 70vh;" />
+      </template>
+      <template v-else-if="previewType === 'image'">
+        <img :src="previewUrl" :alt="previewFileName" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;" />
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFileStore, useUserStore, useTransferStore } from '../store'
-import { getFileList, createFolder, deleteFiles, shareFile } from '../api/file'
+import { getFileList, createFolder, deleteFiles, shareFile, getFileUrls, getVideoPlayUrl, getImagePreviewUrl } from '../api/file'
 import { createShare } from '../api/share'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
@@ -187,6 +206,11 @@ const shareSuccess = ref(false)
 const shareResult = ref({ linkUrl: '', passwd: '' })
 const uploading = ref(false)
 const uploadPercent = ref(0)
+const previewDialogVisible = ref(false)
+const previewType = ref<'image'|'video'|''>('')
+const previewUrl = ref('')
+const previewFileName = ref('')
+const videoResolution = 720 // 可根据需要选择分辨率
 
 const folderForm = ref({
   name: ''
@@ -234,10 +258,30 @@ const handleSelectionChange = (selection: any[]) => {
   fileStore.setSelectedFiles(selection)
 }
 
-const handleRowDblClick = (row: any) => {
+const handleRowDblClick = async (row: any) => {
   if (row.fileType === 'directory') {
     fileStore.setCurrentPath(fileStore.currentPath + '/' + row.fileName)
     loadFileList()
+  } else if (row.fileType && row.fileType.includes('video')) {
+    try {
+      const res = await getVideoPlayUrl(row.id, videoResolution)
+      previewUrl.value = res.data
+      previewType.value = 'video'
+      previewFileName.value = row.fileName
+      previewDialogVisible.value = true
+    } catch (e) {
+      ElMessage.error('获取视频播放地址失败')
+    }
+  } else if (row.fileType && row.fileType.includes('image')) {
+    try {
+      const res = await getImagePreviewUrl(row.id)
+      previewUrl.value = res.data
+      previewType.value = 'image'
+      previewFileName.value = row.fileName
+      previewDialogVisible.value = true
+    } catch (e) {
+      ElMessage.error('获取图片预览地址失败')
+    }
   }
 }
 
@@ -455,7 +499,7 @@ const shareDialogTitleInfo = computed(() => {
   return `分享: "${files[0].fileName}"等${files.length}个文件`
 })
 
-const downloadFile = async (row) => {
+const downloadFile = async (row: any) => {
   const extIndex = row.fileName.lastIndexOf('.')
   const baseName = extIndex !== -1 ? row.fileName.substring(0, extIndex) : row.fileName
   const ext = extIndex !== -1 ? row.fileName.substring(extIndex) : ''
@@ -472,8 +516,33 @@ const downloadFile = async (row) => {
   window.URL.revokeObjectURL(a.href)
 }
 
-const handleBatchDownload = () => {
-  selectedFiles.value.forEach(downloadFile)
+const handleBatchDownload = async () => {
+  const selected = fileStore.selectedFiles
+  if (!selected.length) return
+  const ids = selected.map(f => f.id)
+  try {
+    const res = await getFileUrls(ids)
+    const urls = res.data
+    if (!Array.isArray(urls) || urls.length !== selected.length) {
+      ElMessage.error('获取下载地址失败')
+      return
+    }
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i]
+      const file = selected[i]
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const a = document.createElement('a')
+      a.href = window.URL.createObjectURL(blob)
+      a.download = file.fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(a.href)
+    }
+  } catch (e) {
+    ElMessage.error('批量下载失败')
+  }
 }
 
 function handleUploadProgress(event: any) {

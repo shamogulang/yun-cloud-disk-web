@@ -99,6 +99,28 @@ export function getRecentUploadList(userId: string | number) {
   })
 }
 
+export function getFileUrls(fileIds: (number|string)[]) {
+  return fileRequest({
+    url: '/file/urls',
+    method: 'post',
+    data: fileIds
+  })
+}
+
+export function getVideoPlayUrl(fileId: number|string, resolution: number|string) {
+  return fileRequest({
+    url: `/file/${fileId}/${resolution}/video-play-url`,
+    method: 'get'
+  })
+}
+
+export function getImagePreviewUrl(fileId: number|string) {
+  return fileRequest({
+    url: `/file/${fileId}/image-preview-url`,
+    method: 'get'
+  })
+}
+
 // 以下为上传相关逻辑整合自src/utils/upload.ts
 
 interface UploadResponse {
