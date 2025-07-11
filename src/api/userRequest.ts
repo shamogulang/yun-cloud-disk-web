@@ -1,5 +1,6 @@
 import { createRequestInstance } from './request'
+import { API_CONFIG } from '../config/api'
 
-const userRequest = createRequestInstance('http://127.0.0.1:8081')
+const userRequest = createRequestInstance(API_CONFIG.USER_API)
 
 export default userRequest 

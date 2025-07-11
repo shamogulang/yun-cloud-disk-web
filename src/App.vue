@@ -7,7 +7,11 @@ const userStore = useUserStore()
 onMounted(async () => {
   if (userStore.token) {
     try {
-      await userStore.username()
+      // 如果需要获取用户信息，应该调用API
+      // const res = await getUsername()
+      // if (res.code === 200) {
+      //   userStore.setUsername(res.data.username)
+      // }
     } catch (error) {
       console.error('Failed to fetch user info:', error)
     }

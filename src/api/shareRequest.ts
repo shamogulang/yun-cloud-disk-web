@@ -1,6 +1,7 @@
 import { createRequestInstance } from './request'
+import { API_CONFIG } from '../config/api'
 
-const shareRequest = createRequestInstance('http://127.0.0.1:8083')
+const shareRequest = createRequestInstance(API_CONFIG.SHARE_API)
 
 export default shareRequest
 

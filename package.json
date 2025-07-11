@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "vite --mode development",
+    "build": "vue-tsc -b && vite build --mode production",
+    "build:dev": "vue-tsc -b && vite build --mode development",
+    "preview": "vite preview",
+    "docker:build": "npm run build && docker build -f dockerfile/Dockerfile -t yun-cloud-disk-web ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.830.0",
@@ -19,6 +21,7 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@types/node": "^24.0.13",
     "@types/spark-md5": "^3.0.5",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",

@@ -1,5 +1,6 @@
 import { createRequestInstance } from './request'
+import { API_CONFIG } from '../config/api'
 
-const spaceRequest = createRequestInstance('http://127.0.0.1:8082')
+const spaceRequest = createRequestInstance(API_CONFIG.SPACE_API)
 
 export default spaceRequest 

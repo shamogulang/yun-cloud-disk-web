@@ -131,7 +131,7 @@ const userStore = useUserStore()
 
 onMounted(async () => {
   try {
-    const res = await getShareDetail(linkId)
+    const res: any = await getShareDetail(linkId)
     console.log(res)
     if (res.code === 200) {
       shareContent.value = {
@@ -155,7 +155,7 @@ onMounted(async () => {
 
 const verifyPasswd = async () => {
   try {
-    const res = await verifyShare({ linkId, passwd: passwd.value })
+    const res: any = await verifyShare({ linkId, passwd: passwd.value })
     console.log(res)
     console.log(12)
     if (res.code === 200) {
@@ -239,7 +239,7 @@ const logout = () => {
   router.push('/login')
 }
 
-const downloadFile = async (row) => {
+const downloadFile = async (row: any) => {
   const extIndex = row.fileName.lastIndexOf('.')
   const baseName = extIndex !== -1 ? row.fileName.substring(0, extIndex) : row.fileName
   const ext = extIndex !== -1 ? row.fileName.substring(extIndex) : ''

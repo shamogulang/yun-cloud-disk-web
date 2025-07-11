@@ -1,5 +1,6 @@
 import { createRequestInstance } from './request'
+import { API_CONFIG } from '../config/api'
 
-const fileRequest = createRequestInstance('http://127.0.0.1:8080')
+const fileRequest = createRequestInstance(API_CONFIG.FILE_API)
 
 export default fileRequest 
